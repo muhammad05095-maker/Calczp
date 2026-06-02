@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расчёт зарплаты учителя</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1e40af;
+            --accent: #f59e0b;
+            --bg-start: #0f172a;
+            --bg-mid: #1e293b;
+            --bg-end: #0f172a;
+            --glass: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --text: #f1f5f9;
+            --text-light: #94a3b8;
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            --radius: 24px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: linear-gradient(135deg, #0b1120, #1a2332, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientShift 18s ease infinite;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.2; }
+            50% { transform: translateY(-50px) scale(1.3); opacity: 0.5; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 820px;
+            width: 100%;
+            background: var(--glass);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border-radius: var(--radius);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 64, 175, 0.2));
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            transition: all var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .logo:hover {
+            transform: rotate(8deg) scale(1.08);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .header h1 {
+            font-weight: 600;
+            font-size: 1.7rem;
+            letter-spacing: -0.5px;
+            color: white;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .content {
+            padding: 28px 30px 30px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 22px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-group label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .hint {
+            font-size: 0.7rem;
+            color: #64748b;
+            font-weight: 400;
+            margin-left: 2px;
+            text-transform: none;
+        }
+
+        input, select {
+            padding: 14px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            color: white;
+            outline: none;
+            transition: all var(--transition);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        input::placeholder {
+            color: #64748b;
+        }
+
+        input:hover, select:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25), 0 0 20px rgba(59, 130, 246, 0.15);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #e2e8f0;
+        }
+
+        .radio-group input[type="radio"] {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            background: transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            top: 2px;
+        }
+
+        .radio-group input[type="radio"]:checked {
+            border-color: var(--primary);
+            background: var(--primary);
+            box-shadow: 0 0 8px rgba(59,130,246,0.6);
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin: 20px 0 18px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 14px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: white;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 26px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: transform var(--transition);
+        }
+
+        .result-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .salary-value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 8px 0 14px;
+            letter-spacing: -0.5px;
+            text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+            transition: all 0.2s;
+        }
+
+        .details {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            line-height: 1.7;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+            border-radius: 14px;
+            padding: 14px 20px;
+            width: 100%;
+            max-width: 380px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.8rem;
+            color: #64748b;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Стили для печати */
+        #printContent {
+            display: none;
+        }
+
+        @media print {
+            body {
+                background: white !important;
+                animation: none;
+                padding: 20px;
+            }
+            .particles, .container, .button-group, .footer-note {
+                display: none !important;
+            }
+            #printContent {
+                display: block !important;
+                font-family: 'Inter', sans-serif;
+                color: #1e293b;
+                max-width: 700px;
+                margin: 0 auto;
+                padding: 20px;
+                background: white;
+            }
+            #printContent h2 {
+                font-size: 1.8rem;
+                margin-bottom: 0.3rem;
+                color: #0f172a;
+            }
+            #printContent .date {
+                font-size: 0.8rem;
+                color: #475569;
+                margin-bottom: 1.5rem;
+            }
+            #printContent table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1.5rem 0;
+            }
+            #printContent th, #printContent td {
+                text-align: left;
+                padding: 10px 12px;
+                border-bottom: 1px solid #cbd5e1;
+            }
+            #printContent th {
+                background: #f1f5f9;
+                font-weight: 600;
+            }
+            #printContent .total-row td {
+                font-weight: 700;
+                font-size: 1.2rem;
+                color: #b45309;
+                border-top: 2px solid #94a3b8;
+            }
+            #printContent .footnote {
+                font-size: 0.75rem;
+                color: #64748b;
+                margin-top: 1.8rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .content {
+                padding: 20px 16px 22px;
+            }
+            .button-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">🧮</div>
+            <div>
+                <h1>Расчёт зарплаты учителя</h1>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="grid">
+                <div class="input-group">
+                    <label>🏫 Базовая ставка <span class="hint">за 18ч, ₽</span></label>
+                    <input type="number" id="baseSalary" value="15000" min="0" step="100">
+                </div>
+                <div class="input-group">
+                    <label>⏱️ Нагрузка в неделю</label>
+                    <input type="number" id="hours" value="24" min="0" step="1">
+                </div>
+                <div class="input-group">
+                    <label>📚 Категория</label>
+                    <select id="category">
+                        <option value="1">Без категории</option>
+                        <option value="1.15">Первая (+15%)</option>
+                        <option value="1.35">Высшая (+35%)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>📝 Тетради (часы)</label>
+                    <input type="number" id="gradingHours" value="4" min="0" step="1">
+                </div>
+                <div class="input-group">
+                    <label>📊 % проверки <span class="hint">от ставки</span></label>
+                    <input type="number" id="gradingPercent" value="15" min="0" max="100" step="1">
+                </div>
+                <div class="input-group">
+                    <label>👨‍👩‍👧‍👦 Иждивенцы</label>
+                    <input type="number" id="dependents" value="0" min="0" max="10" step="1">
+                </div>
+                <div class="input-group">
+                    <label>🌐 Регион. коэф.</label>
+                    <input type="number" id="regional" value="1.0" min="1" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>🏅 Класс. рук-во <span class="hint">₽/мес</span></label>
+                    <input type="number" id="classManagementAmount" value="5000" min="0" step="100">
+                </div>
+                <div class="input-group">
+                    <label>🏘️ Тип местности</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="locality" value="city" checked> Город
+                        </label>
+                        <label>
+                            <input type="radio" name="locality" value="rural"> Село
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" id="calcBtn">
+                    <span>⚡</span> Рассчитать
+                </button>
+                <button class="btn btn-outline" id="resetBtn">
+                    <span>↺</span> Сбросить
+                </button>
+                <button class="btn btn-outline" id="copyBtn">
+                    <span>📋</span> Копировать
+                </button>
+                <button class="btn btn-outline" id="printBtn">
+                    <span>🖨️</span> Печать
+                </button>
+            </div>
+
+            <div class="result-card">
+                <div class="result-label">К выплате на руки</div>
+                <div class="salary-value" id="totalResult">0 ₽</div>
+                <div class="details" id="breakdown"></div>
+            </div>
+
+            <div class="footer-note">
+                ⚠️ Калькулятор носит ознакомительный характер. Для точного расчёта обратитесь в бухгалтерию.
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрытый блок для печати -->
+    <div id="printContent"></div>
+
+    <script>
+        (function() {
+            // Генерация частиц
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 18; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 120 + 40;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = Math.random() * 20 + 15 + 's';
+                particlesContainer.appendChild(particle);
+            }
+
+            // Элементы DOM
+            const baseSalary = document.getElementById('baseSalary');
+            const hours = document.getElementById('hours');
+            const category = document.getElementById('category');
+            const gradingHours = document.getElementById('gradingHours');
+            const gradingPercent = document.getElementById('gradingPercent');
+            const dependents = document.getElementById('dependents');
+            const regional = document.getElementById('regional');
+            const classMgmt = document.getElementById('classManagementAmount');
+            const localityRadios = document.getElementsByName('locality');
+            const totalResult = document.getElementById('totalResult');
+            const breakdown = document.getElementById('breakdown');
+            const printContent = document.getElementById('printContent');
+
+            const inputs = [baseSalary, hours, category, gradingHours, gradingPercent, dependents, regional, classMgmt];
+
+            function getLocality() {
+                for (const radio of localityRadios) {
+                    if (radio.checked) return radio.value;
+                }
+                return 'city';
+            }
+
+            // Функция расчёта – возвращает объект с детализацией
+            function calculate() {
+                const base = parseFloat(baseSalary.value) || 0;
+                const hrs = parseFloat(hours.value) || 0;
+                const catMult = parseFloat(category.value);
+                const grHours = parseFloat(gradingHours.value) || 0;
+                const grPercent = (parseFloat(gradingPercent.value) || 0) / 100;
+                const dep = parseInt(dependents.value, 10) || 0;
+                const reg = parseFloat(regional.value) || 1;
+                const clMgmt = parseFloat(classMgmt.value) || 0;
+                const locality = getLocality();
+
+                // Сельская надбавка 25% к базовой ставке (Постановление Правительства РФ от 03.12.2002 N 858)
+                const effectiveBase = locality === 'rural' ? base * 1.25 : base;
+
+                // Оплата за нагрузку с учётом категории
+                let basePay = (effectiveBase / 18) * hrs;
+                basePay *= catMult;
+
+                // Доплата за проверку тетрадей (процент от эффективной ставки, пропорционально часам проверки)
+                const gradingPay = (effectiveBase * grPercent) * (grHours / 18);
+
+                const beforeRegional = basePay + gradingPay;
+                // Федеральная выплата за классное руководство не индексируется на районный коэффициент (письмо Минпросвещения)
+                const gross = beforeRegional * reg + clMgmt;
+
+                // Стандартные налоговые вычеты на детей (ст. 218 НК РФ)
+                let deduction = 0;
+                if (dep >= 1) deduction += 1400;
+                if (dep >= 2) deduction += 1400;
+                if (dep >= 3) deduction += (dep - 2) * 3000;
+
+                const taxable = Math.max(0, gross - deduction);
+                const tax = taxable * 0.13;
+                const net = gross - tax;
+
+                // Обновление интерфейса
+                totalResult.textContent = net.toLocaleString('ru-RU', {
+                    style: 'currency',
+                    currency: 'RUB',
+                    maximumFractionDigits: 2
+                });
+
+                breakdown.innerHTML = `
+                    📄 Начислено до вычетов: ${gross.toFixed(2)} ₽<br>
+                    🧾 НДФЛ (13%): ${tax.toFixed(2)} ₽<br>
+                    👶 Вычет на детей: ${deduction.toLocaleString('ru-RU')} ₽<br>
+                    🕒 Нагрузка: ${hrs} ч | Категория: ×${catMult}<br>
+                    📍 Регион. коэф.: ${reg} | 🏘️ ${locality === 'rural' ? 'Село (+25%)' : 'Город'}
+                `;
+
+                // Возвращаем данные для печати
+                return {
+                    base, effectiveBase, hrs, catMult, grHours, grPercent, dep, reg, clMgmt, locality,
+                    basePay, gradingPay, beforeRegional, gross, deduction, taxable, tax, net
+                };
+            }
+
+            // Автопересчёт при изменении полей
+            inputs.forEach(input => input.addEventListener('input', calculate));
+            localityRadios.forEach(radio => radio.addEventListener('change', calculate));
+
+            // Кнопка «Рассчитать»
+            document.getElementById('calcBtn').addEventListener('click', () => {
+                calculate();
+                totalResult.style.transform = 'scale(1.05)';
+                setTimeout(() => totalResult.style.transform = '', 150);
+            });
+
+            // Сброс
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                baseSalary.value = 15000;
+                hours.value = 24;
+                category.value = '1';
+                gradingHours.value = 4;
+                gradingPercent.value = 15;
+                dependents.value = 0;
+                regional.value = 1.0;
+                classMgmt.value = 5000;
+                document.getElementById('localityCity').checked = true; // понадобится id, добавим ниже
+                calculate();
+            });
+
+            // Копирование
+            document.getElementById('copyBtn').addEventListener('click', () => {
+                const netText = totalResult.textContent.replace(/[^\d,.-]/g, '').replace(',', '.');
+                navigator.clipboard.writeText(netText + ' ₽').then(() => {
+                    const btn = document.getElementById('copyBtn');
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = '<span>✅</span> Скопировано';
+                    setTimeout(() => btn.innerHTML = orig, 1500);
+                }).catch(() => alert('Не удалось скопировать'));
+            });
+
+            // Печать подробного расчёта
+            document.getElementById('printBtn').addEventListener('click', () => {
+                const data = calculate();
+                const date = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                const localityText = data.locality === 'rural' ? 'Сельская местность (+25% к ставке)' : 'Городская местность';
+
+                // Формируем HTML для печати
+                const html = `
+                    <h2>Детализация расчёта заработной платы учителя</h2>
+                    <div class="date">Дата расчёта: ${date}</div>
+                    <table>
+                        <tr><th>Параметр</th><th>Значение</th></tr>
+                        <tr><td>Базовая ставка (18 ч)</td><td>${data.base.toFixed(2)} ₽</td></tr>
+                        <tr><td>Тип местности</td><td>${localityText}</td></tr>
+                        <tr><td>Эффективная ставка</td><td>${data.effectiveBase.toFixed(2)} ₽</td></tr>
+                        <tr><td>Нагрузка (часов/нед)</td><td>${data.hrs}</td></tr>
+                        <tr><td>Коэффициент категории</td><td>×${data.catMult}</td></tr>
+                        <tr><td>Оплата за нагрузку</td><td>${data.basePay.toFixed(2)} ₽</td></tr>
+                        <tr><td>Проверка тетрадей (часы/%)</td><td>${data.grHours} ч / ${(data.grPercent*100).toFixed(0)}%</td></tr>
+                        <tr><td>Доплата за тетради</td><td>${data.gradingPay.toFixed(2)} ₽</td></tr>
+                        <tr><td>Итого до районного коэф.</td><td>${data.beforeRegional.toFixed(2)} ₽</td></tr>
+                        <tr><td>Районный коэффициент</td><td>${data.reg}</td></tr>
+                        <tr><td>После районного коэф.</td><td>${(data.beforeRegional * data.reg).toFixed(2)} ₽</td></tr>
+                        <tr><td>Классное руководство</td><td>${data.clMgmt.toFixed(2)} ₽</td></tr>
+                        <tr><td>Начислено (gross)</td><td><strong>${data.gross.toFixed(2)} ₽</strong></td></tr>
+                        <tr><td>Детский вычет</td><td>${data.deduction.toFixed(2)} ₽ (за ${data.dep} детей)</td></tr>
+                        <tr><td>Налогооблагаемая база</td><td>${data.taxable.toFixed(2)} ₽</td></tr>
+                        <tr><td>НДФЛ 13%</td><td>${data.tax.toFixed(2)} ₽</td></tr>
+                        <tr class="total-row"><td>К выплате на руки</td><td>${data.net.toFixed(2)} ₽</td></tr>
+                    </table>
+                    <div class="footnote">
+                        Расчёт выполнен в соответствии с Трудовым кодексом РФ, главой 23 НК РФ, Постановлением Правительства РФ от 03.12.2002 N 858 (сельская надбавка).
+                        Выплата за классное руководство – в размере, установленном федеральным законодательством (не менее 5000 ₽), не индексируется на районный коэффициент.
+                        Стандартные налоговые вычеты применяются без учёта ограничения по доходу (350 000 ₽ нарастающим итогом).
+                    </div>
+                `;
+                printContent.innerHTML = html;
+                window.print();
+            });
+
+            // Установим id для radio кнопок, чтобы работал reset
+            document.querySelector('input[value="city"]').setAttribute('id', 'localityCity');
+            document.querySelector('input[value="rural"]').setAttribute('id', 'localityRural');
+
+            // Первичный расчёт
+            calculate();
+        })();
+    </script>
+</body>
+</html>
