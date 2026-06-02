@@ -180,6 +180,13 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
+        /* Исправление видимости опций в выпадающем списке */
+        select option {
+            background-color: #1e293b;  /* тёмный фон, как у основного интерфейса */
+            color: #f1f5f9;            /* светлый текст */
+            font-weight: 500;
+        }
+
         input::placeholder {
             color: #64748b;
         }
@@ -417,6 +424,10 @@
                 justify-content: center;
             }
         }
+
+        #customCategoryGroup {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -441,12 +452,17 @@
                     <input type="number" id="hours" value="24" min="0" step="1">
                 </div>
                 <div class="input-group">
-                    <label>📚 Категория</label>
+                    <label>🎓 Категория (% надбавки)</label>
                     <select id="category">
-                        <option value="1">Без категории</option>
-                        <option value="1.15">Первая (+15%)</option>
-                        <option value="1.35">Высшая (+35%)</option>
+                        <option value="0">Без категории (0%)</option>
+                        <option value="15" selected>Первая (+15%)</option>
+                        <option value="35">Высшая (+35%)</option>
+                        <option value="custom">Другая...</option>
                     </select>
+                </div>
+                <div class="input-group" id="customCategoryGroup">
+                    <label>✏️ Свой процент</label>
+                    <input type="number" id="customCategoryPercent" value="20" min="0" max="200" step="1">
                 </div>
                 <div class="input-group">
                     <label>📝 Тетради (часы)</label>
@@ -472,10 +488,10 @@
                     <label>🏘️ Тип местности</label>
                     <div class="radio-group">
                         <label>
-                            <input type="radio" name="locality" value="city" checked> Город
+                            <input type="radio" name="locality" value="city" id="localityCity" checked> Город
                         </label>
                         <label>
-                            <input type="radio" name="locality" value="rural"> Село
+                            <input type="radio" name="locality" value="rural" id="localityRural"> Село
                         </label>
                     </div>
                 </div>
@@ -531,7 +547,9 @@
             // Элементы DOM
             const baseSalary = document.getElementById('baseSalary');
             const hours = document.getElementById('hours');
-            const category = document.getElementById('category');
+            const categorySelect = document.getElementById('category');
+            const customGroup = document.getElementById('customCategoryGroup');
+            const customPercent = document.getElementById('customCategoryPercent');
             const gradingHours = document.getElementById('gradingHours');
             const gradingPercent = document.getElementById('gradingPercent');
             const dependents = document.getElementById('dependents');
@@ -542,7 +560,19 @@
             const breakdown = document.getElementById('breakdown');
             const printContent = document.getElementById('printContent');
 
-            const inputs = [baseSalary, hours, category, gradingHours, gradingPercent, dependents, regional, classMgmt];
+            const inputs = [baseSalary, hours, gradingHours, gradingPercent, dependents, regional, classMgmt];
+
+            // Показывать/скрывать поле своего процента
+            categorySelect.addEventListener('change', () => {
+                if (categorySelect.value === 'custom') {
+                    customGroup.style.display = 'flex';
+                } else {
+                    customGroup.style.display = 'none';
+                }
+                calculate();
+            });
+
+            customPercent.addEventListener('input', calculate);
 
             function getLocality() {
                 for (const radio of localityRadios) {
@@ -551,11 +581,22 @@
                 return 'city';
             }
 
+            // Возвращает процент и коэффициент категории
+            function getCategoryData() {
+                if (categorySelect.value === 'custom') {
+                    const percent = parseFloat(customPercent.value) || 0;
+                    return { percent, mult: 1 + percent / 100 };
+                } else {
+                    const percent = parseFloat(categorySelect.value) || 0;
+                    return { percent, mult: 1 + percent / 100 };
+                }
+            }
+
             // Функция расчёта – возвращает объект с детализацией
             function calculate() {
                 const base = parseFloat(baseSalary.value) || 0;
                 const hrs = parseFloat(hours.value) || 0;
-                const catMult = parseFloat(category.value);
+                const { percent: catPercent, mult: catMult } = getCategoryData();
                 const grHours = parseFloat(gradingHours.value) || 0;
                 const grPercent = (parseFloat(gradingPercent.value) || 0) / 100;
                 const dep = parseInt(dependents.value, 10) || 0;
@@ -598,13 +639,13 @@
                     📄 Начислено до вычетов: ${gross.toFixed(2)} ₽<br>
                     🧾 НДФЛ (13%): ${tax.toFixed(2)} ₽<br>
                     👶 Вычет на детей: ${deduction.toLocaleString('ru-RU')} ₽<br>
-                    🕒 Нагрузка: ${hrs} ч | Категория: ×${catMult}<br>
+                    🕒 Нагрузка: ${hrs} ч | 🎓 Категория: +${catPercent}%<br>
                     📍 Регион. коэф.: ${reg} | 🏘️ ${locality === 'rural' ? 'Село (+25%)' : 'Город'}
                 `;
 
                 // Возвращаем данные для печати
                 return {
-                    base, effectiveBase, hrs, catMult, grHours, grPercent, dep, reg, clMgmt, locality,
+                    base, effectiveBase, hrs, catPercent, catMult, grHours, grPercent, dep, reg, clMgmt, locality,
                     basePay, gradingPay, beforeRegional, gross, deduction, taxable, tax, net
                 };
             }
@@ -624,13 +665,15 @@
             document.getElementById('resetBtn').addEventListener('click', () => {
                 baseSalary.value = 15000;
                 hours.value = 24;
-                category.value = '1';
+                categorySelect.value = '15'; // Первая категория
+                customGroup.style.display = 'none';
+                customPercent.value = 20;
                 gradingHours.value = 4;
                 gradingPercent.value = 15;
                 dependents.value = 0;
                 regional.value = 1.0;
                 classMgmt.value = 5000;
-                document.getElementById('localityCity').checked = true; // понадобится id, добавим ниже
+                document.getElementById('localityCity').checked = true;
                 calculate();
             });
 
@@ -651,7 +694,6 @@
                 const date = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
                 const localityText = data.locality === 'rural' ? 'Сельская местность (+25% к ставке)' : 'Городская местность';
 
-                // Формируем HTML для печати
                 const html = `
                     <h2>Детализация расчёта заработной платы учителя</h2>
                     <div class="date">Дата расчёта: ${date}</div>
@@ -661,7 +703,8 @@
                         <tr><td>Тип местности</td><td>${localityText}</td></tr>
                         <tr><td>Эффективная ставка</td><td>${data.effectiveBase.toFixed(2)} ₽</td></tr>
                         <tr><td>Нагрузка (часов/нед)</td><td>${data.hrs}</td></tr>
-                        <tr><td>Коэффициент категории</td><td>×${data.catMult}</td></tr>
+                        <tr><td>Категория (надбавка)</td><td>+${data.catPercent}%</td></tr>
+                        <tr><td>Коэффициент категории</td><td>×${data.catMult.toFixed(2)}</td></tr>
                         <tr><td>Оплата за нагрузку</td><td>${data.basePay.toFixed(2)} ₽</td></tr>
                         <tr><td>Проверка тетрадей (часы/%)</td><td>${data.grHours} ч / ${(data.grPercent*100).toFixed(0)}%</td></tr>
                         <tr><td>Доплата за тетради</td><td>${data.gradingPay.toFixed(2)} ₽</td></tr>
@@ -685,9 +728,10 @@
                 window.print();
             });
 
-            // Установим id для radio кнопок, чтобы работал reset
-            document.querySelector('input[value="city"]').setAttribute('id', 'localityCity');
-            document.querySelector('input[value="rural"]').setAttribute('id', 'localityRural');
+            // Инициализация отображения поля "другая" при загрузке
+            if (categorySelect.value === 'custom') {
+                customGroup.style.display = 'flex';
+            }
 
             // Первичный расчёт
             calculate();
